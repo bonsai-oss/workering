@@ -5,8 +5,15 @@ stages:
 unit tests:
   image: golang
   stage: test
+  before_script:
+    - go install gotest.tools/gotestsum@latest
   script:
     - go test -v ./...
+    - /go/bin/gotestsum --junitfile report.xml --format testname
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
 
 fmt:
   image: golang
