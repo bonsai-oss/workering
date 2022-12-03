@@ -1,0 +1,14 @@
+stages:
+  - test
+
+unit tests:
+  image: golang
+  stage: test
+  script:
+    - go test -v ./...
+
+fmt:
+  image: golang
+  stage: test
+  script:
+    - go fmt ./...

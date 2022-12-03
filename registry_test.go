@@ -2,10 +2,11 @@ package workering_test
 
 import (
 	"context"
-	"github.com/bonsai-oss/workering"
 	"log"
 	"testing"
 	"time"
+
+	"github.com/bonsai-oss/workering"
 )
 
 func TestRegister(t *testing.T) {
@@ -29,12 +30,12 @@ func TestRegister(t *testing.T) {
 
 	err := worker.Start()
 	if err != nil {
-		log.Println(err)
+		t.Errorf("worker.Start() error = %v", err)
 	}
 	time.Sleep(2 * time.Second)
 	err = worker.Stop()
 	if err != nil {
-		log.Println(err)
+		t.Errorf("worker.Stop() error = %v", err)
 	}
 
 }
