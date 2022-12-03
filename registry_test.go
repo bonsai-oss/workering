@@ -37,5 +37,4 @@ func TestRegister(t *testing.T) {
 	if err != nil {
 		t.Errorf("worker.Stop() error = %v", err)
 	}
-
 }
