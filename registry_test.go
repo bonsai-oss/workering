@@ -1,40 +1,49 @@
 package workering_test
 
 import (
-	"context"
-	"log"
 	"testing"
-	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/bonsai-oss/workering"
 )
 
 func TestRegister(t *testing.T) {
-	workerA := func(ctx context.Context, done chan<- any) {
-		defer (func() { done <- "" })()
-		ticker := time.NewTicker(1000 * time.Millisecond)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				log.Println("tick")
-			}
-		}
-	}
+	// empty worker
+	assert.Panics(t, func() {
+		workering.Register(workering.RegisterSet{
+			Name:   "test-worker",
+			Worker: nil,
+		})
+	})
 
-	workering.Register("workerA", workerA)
+	// empty name
+	assert.Panics(t, func() {
+		workering.Register(workering.RegisterSet{
+			Name:   "",
+			Worker: testWorkerBuilder(nil, nil),
+		})
+	})
 
-	worker := workering.Get("workerA")
+	// normal register call
+	assert.NotPanics(t, func() {
+		workering.Register(workering.RegisterSet{
+			Name:   "test-worker2",
+			Worker: testWorkerBuilder(nil, nil),
+		})
 
-	err := worker.Start()
-	if err != nil {
-		t.Errorf("worker.Start() error = %v", err)
-	}
-	time.Sleep(2 * time.Second)
-	err = worker.Stop()
-	if err != nil {
-		t.Errorf("worker.Stop() error = %v", err)
-	}
+		assert.NotNil(t, workering.Get("test-worker"))
+	})
+
+	// panic on duplicate register
+	assert.Panics(t, func() {
+		workering.Register(workering.RegisterSet{
+			Name:   "test-worker-duplicate",
+			Worker: testWorkerBuilder(nil, nil),
+		})
+		workering.Register(workering.RegisterSet{
+			Name:   "test-worker-duplicate",
+			Worker: testWorkerBuilder(nil, nil),
+		})
+	})
 }
