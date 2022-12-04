@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bonsai-oss/workering"
+	"github.com/bonsai-oss/workering/v2"
 )
 
 func testWorkerBuilder(input, output chan string) workering.WorkerFunction {
