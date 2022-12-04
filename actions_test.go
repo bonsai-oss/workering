@@ -10,7 +10,7 @@ import (
 	"github.com/bonsai-oss/workering"
 )
 
-func testWorkerBuilder(input, output chan string) workering.Worker {
+func testWorkerBuilder(input, output chan string) workering.WorkerFunction {
 	return func(ctx context.Context, done chan<- any) {
 		defer (func() { done <- "" })()
 		for {
@@ -29,11 +29,11 @@ func TestWorker_Start(t *testing.T) {
 	outputChannel := make(chan string)
 
 	workering.Register(workering.RegisterSet{
-		Name:   "test-worker",
+		Name:   "test-Worker",
 		Worker: testWorkerBuilder(inputChannel, outputChannel),
 	})
 
-	worker := workering.Get("test-worker")
+	worker := workering.Get("test-Worker")
 	assert.Nil(t, worker.Start())
 	inputChannel <- "hello"
 	assert.Equal(t, "HELLO", <-outputChannel)

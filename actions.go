@@ -11,19 +11,19 @@ func (w *Worker) Start() error {
 	mux.Lock()
 	defer mux.Unlock()
 
-	if status[w] == Running {
+	if w.status == Running {
 		return fmt.Errorf("worker already running")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	contexts[w] = ctx
-	cancelFuncs[w] = cancel
+	w.ctx = &ctx
+	w.cancelFunc = &cancel
 
 	done := make(chan any)
-	go (*w)(ctx, done)
+	go w.worker(ctx, done)
 	go w.watchdog(done)
 
-	status[w] = Running
+	w.status = Running
 	return nil
 }
 
@@ -31,32 +31,39 @@ func (w *Worker) watchdog(done chan any) {
 	<-done
 	mux.Lock()
 	defer mux.Unlock()
-	status[w] = Stopped
+	w.status = Stopped
 }
 
 func (w *Worker) Stop() error {
 	mux.Lock()
 	defer mux.Unlock()
 
-	if status[w] == Stopped {
+	if w.status == Stopped {
 		return fmt.Errorf("worker already stopped")
 	}
-	cancelFuncs[w]()
-	status[w] = Stopped
+	(*w.cancelFunc)()
+	w.status = Stopped
 
-	delete(contexts, w)
-	delete(cancelFuncs, w)
 	return nil
 }
 
 func (w *Worker) Status() WorkerStatus {
-	return status[w]
+	return w.status
+}
+
+func Status() []WorkerStatus {
+	var statuses []WorkerStatus
+	for _, worker := range workers {
+		statuses = append(statuses, worker.Status())
+	}
+
+	return statuses
 }
 
 func StartAll() error {
 	var err error
 	for _, worker := range workers {
-		if (worker).Status() == Running {
+		if worker.Status() == Running {
 			continue
 		}
 		if startError := worker.Start(); startError != nil {
@@ -69,7 +76,7 @@ func StartAll() error {
 func StopAll() error {
 	var err error
 	for _, worker := range workers {
-		if (worker).Status() == Running {
+		if worker.Status() == Stopped {
 			continue
 		}
 		if startError := worker.Stop(); startError != nil {

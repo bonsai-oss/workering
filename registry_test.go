@@ -9,10 +9,10 @@ import (
 )
 
 func TestRegister(t *testing.T) {
-	// empty worker
+	// empty Worker
 	assert.Panics(t, func() {
 		workering.Register(workering.RegisterSet{
-			Name:   "test-worker",
+			Name:   "test-Worker",
 			Worker: nil,
 		})
 	})
@@ -32,17 +32,17 @@ func TestRegister(t *testing.T) {
 			Worker: testWorkerBuilder(nil, nil),
 		})
 
-		assert.NotNil(t, workering.Get("test-worker"))
+		assert.NotNil(t, workering.Get("test-Worker"))
 	})
 
 	// panic on duplicate register
 	assert.Panics(t, func() {
 		workering.Register(workering.RegisterSet{
-			Name:   "test-worker-duplicate",
+			Name:   "test-Worker-duplicate",
 			Worker: testWorkerBuilder(nil, nil),
 		})
 		workering.Register(workering.RegisterSet{
-			Name:   "test-worker-duplicate",
+			Name:   "test-Worker-duplicate",
 			Worker: testWorkerBuilder(nil, nil),
 		})
 	})
