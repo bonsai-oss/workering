@@ -1,4 +1,4 @@
-module github.com/bonsai-oss/workering
+module github.com/bonsai-oss/workering/v2
 
 go 1.19
 
