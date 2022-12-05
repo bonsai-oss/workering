@@ -3,6 +3,7 @@ package workering
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/hashicorp/go-multierror"
 )
@@ -29,9 +30,27 @@ func (w *Worker) Start() error {
 
 func (w *Worker) watchdog(done chan any) {
 	<-done
-	mux.Lock()
-	defer mux.Unlock()
-	w.status = Stopped
+	defer func() { w.status = Stopped }()
+
+	if len(w.waiters) == 0 {
+		return
+	}
+
+	wg := sync.WaitGroup{}
+	for waiterIndex := range w.waiters {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup, wd waiter) {
+			defer wg.Done()
+			wd <- "done"
+		}(&wg, w.waiters[waiterIndex])
+	}
+	wg.Wait()
+}
+
+func (w *Worker) WaitStopped() <-chan any {
+	var waiterInstance = make(waiter)
+	w.waiters = append(w.waiters, waiterInstance)
+	return waiterInstance
 }
 
 func (w *Worker) Stop() error {
@@ -42,8 +61,8 @@ func (w *Worker) Stop() error {
 		return fmt.Errorf("worker already stopped")
 	}
 	(*w.cancelFunc)()
-	w.status = Stopped
 
+	<-w.WaitStopped()
 	return nil
 }
 

@@ -6,6 +6,7 @@ import (
 )
 
 type WorkerFunction func(ctx context.Context, done chan<- any)
+type waiter chan any
 
 type RegisterSet struct {
 	Name   string
@@ -24,6 +25,7 @@ type Worker struct {
 	status     WorkerStatus
 	ctx        *context.Context
 	cancelFunc *context.CancelFunc
+	waiters    []waiter
 }
 
 var mux sync.RWMutex
@@ -43,9 +45,10 @@ func Register(sets ...RegisterSet) {
 		}
 
 		workers[set.Name] = &Worker{
-			name:   set.Name,
-			worker: set.Worker,
-			status: Stopped,
+			name:    set.Name,
+			worker:  set.Worker,
+			status:  Stopped,
+			waiters: []waiter{},
 		}
 	}
 }

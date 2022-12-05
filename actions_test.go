@@ -24,7 +24,7 @@ func testWorkerBuilder(input, output chan string) workering.WorkerFunction {
 	}
 }
 
-func TestWorker_Start(t *testing.T) {
+func TestWorker_Livecycle(t *testing.T) {
 	inputChannel := make(chan string)
 	outputChannel := make(chan string)
 
@@ -33,9 +33,29 @@ func TestWorker_Start(t *testing.T) {
 		Worker: testWorkerBuilder(inputChannel, outputChannel),
 	})
 
-	worker := workering.Get("test-Worker")
-	assert.Nil(t, worker.Start())
-	inputChannel <- "hello"
-	assert.Equal(t, "HELLO", <-outputChannel)
-	assert.Nil(t, worker.Stop())
+	t.Run("without waiters", func(t *testing.T) {
+		worker := workering.Get("test-Worker")
+		assert.Nil(t, worker.Start())
+		inputChannel <- "hello"
+		assert.Equal(t, "HELLO", <-outputChannel)
+		assert.Nil(t, worker.Stop())
+	})
+
+	t.Run("with waiters", func(t *testing.T) {
+		worker := workering.Get("test-Worker")
+
+		go func() {
+			ret := <-worker.WaitStopped()
+			assert.Equal(t, "done", ret)
+		}()
+		go func() {
+			ret := <-worker.WaitStopped()
+			assert.Equal(t, "done", ret)
+		}()
+
+		assert.Nil(t, worker.Start())
+		inputChannel <- "hello"
+		assert.Equal(t, "HELLO", <-outputChannel)
+		assert.Nil(t, worker.Stop())
+	})
 }
