@@ -81,15 +81,6 @@ func (w *Worker) Status() WorkerStatus {
 	return w.status
 }
 
-func Status() []WorkerStatus {
-	var statuses []WorkerStatus
-	for _, worker := range workers {
-		statuses = append(statuses, worker.Status())
-	}
-
-	return statuses
-}
-
 func StartAll() error {
 	var err error
 	for _, worker := range workers {
@@ -103,6 +94,7 @@ func StartAll() error {
 
 	return err
 }
+
 func StopAll() error {
 	var err error
 	for _, worker := range workers {
