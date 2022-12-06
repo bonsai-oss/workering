@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -44,18 +45,39 @@ func TestWorker_Livecycle(t *testing.T) {
 	t.Run("with waiters", func(t *testing.T) {
 		worker := workering.Get("test-Worker")
 
-		go func() {
-			ret := <-worker.WaitStopped()
-			assert.Equal(t, "done", ret)
-		}()
-		go func() {
-			ret := <-worker.WaitStopped()
-			assert.Equal(t, "done", ret)
-		}()
+		var result1, result2 string
+
+		go func(result *string) {
+			<-worker.WaitStopped()
+			*result = "done"
+		}(&result1)
+		go func(result *string) {
+			<-worker.WaitStopped()
+			*result = "done"
+		}(&result2)
 
 		assert.Nil(t, worker.Start())
 		inputChannel <- "hello"
 		assert.Equal(t, "HELLO", <-outputChannel)
+		assert.Nil(t, worker.Stop())
+
+		// must wait for the waiters to finish
+		time.Sleep(50 * time.Millisecond)
+
+		assert.Equal(t, "done", result1)
+		assert.Equal(t, "done", result2)
+	})
+
+	t.Run("explicit worker reusing", func(t *testing.T) {
+		worker := workering.Get("test-Worker")
+		assert.Nil(t, worker.Start())
+		inputChannel <- "hello"
+		assert.Equal(t, "HELLO", <-outputChannel)
+		assert.Nil(t, worker.Stop())
+
+		assert.Nil(t, worker.Start())
+		inputChannel <- "world"
+		assert.Equal(t, "WORLD", <-outputChannel)
 		assert.Nil(t, worker.Stop())
 	})
 }

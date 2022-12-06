@@ -41,10 +41,16 @@ func (w *Worker) watchdog(done chan any) {
 		wg.Add(1)
 		go func(wg *sync.WaitGroup, wd waiter) {
 			defer wg.Done()
-			wd <- "done"
+			wd <- interface{}(nil)
 		}(&wg, w.waiters[waiterIndex])
 	}
 	wg.Wait()
+
+	// cleanup waiters
+	for waiterIndex := range w.waiters {
+		close(w.waiters[waiterIndex])
+	}
+	w.waiters = []waiter{}
 }
 
 func (w *Worker) WaitStopped() <-chan any {
@@ -63,6 +69,11 @@ func (w *Worker) Stop() error {
 	(*w.cancelFunc)()
 
 	<-w.WaitStopped()
+
+	// clear context and cancelFunc for reusing
+	w.ctx = nil
+	w.cancelFunc = nil
+
 	return nil
 }
 
