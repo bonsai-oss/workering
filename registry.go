@@ -5,9 +5,11 @@ import (
 	"sync"
 )
 
+// WorkerFunction is the function that is executed by a worker
 type WorkerFunction func(ctx context.Context, done chan<- any)
 type waiter chan any
 
+// RegisterSet represents a single worker used for registration with Register
 type RegisterSet struct {
 	Name   string
 	Worker WorkerFunction
@@ -19,6 +21,7 @@ func init() {
 	workers = make(map[string]*Worker)
 }
 
+// Worker represents a single worker
 type Worker struct {
 	name       string
 	worker     WorkerFunction
@@ -30,6 +33,7 @@ type Worker struct {
 
 var mux sync.RWMutex
 
+// Register registers one or more workers to the registry
 func Register(sets ...RegisterSet) {
 	mux.Lock()
 	defer mux.Unlock()
@@ -53,6 +57,7 @@ func Register(sets ...RegisterSet) {
 	}
 }
 
+// Get returns a worker by name
 func Get(name string) *Worker {
 	return workers[name]
 }
