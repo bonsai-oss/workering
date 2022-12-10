@@ -29,6 +29,7 @@ type Worker struct {
 	ctx            *context.Context
 	cancelFunc     *context.CancelFunc
 	waiters        []waiter
+	stoppedChan    chan any
 }
 
 var mux sync.RWMutex
@@ -53,11 +54,16 @@ func Register(sets ...RegisterSet) {
 			workerFunction: set.Worker,
 			status:         Stopped,
 			waiters:        []waiter{},
+			stoppedChan:    make(chan any),
 		}
 	}
 }
 
 // Get returns a workerFunction by name
 func Get(name string) *Worker {
-	return workers[name]
+	worker, found := workers[name]
+	if !found {
+		return nil
+	}
+	return worker
 }
