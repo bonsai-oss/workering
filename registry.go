@@ -5,11 +5,11 @@ import (
 	"sync"
 )
 
-// WorkerFunction is the function that is executed by a worker
+// WorkerFunction is the main workload function that is executed by a Worker
 type WorkerFunction func(ctx context.Context, done chan<- any)
 type waiter chan any
 
-// RegisterSet represents a single worker used for registration with Register
+// RegisterSet describes a Worker used for registration with Register
 type RegisterSet struct {
 	Name   string
 	Worker WorkerFunction
@@ -21,19 +21,19 @@ func init() {
 	workers = make(map[string]*Worker)
 }
 
-// Worker represents a single worker
+// Worker represents a single Worker
 type Worker struct {
-	name       string
-	worker     WorkerFunction
-	status     WorkerStatus
-	ctx        *context.Context
-	cancelFunc *context.CancelFunc
-	waiters    []waiter
+	name           string
+	workerFunction WorkerFunction
+	status         WorkerStatus
+	ctx            *context.Context
+	cancelFunc     *context.CancelFunc
+	waiters        []waiter
 }
 
 var mux sync.RWMutex
 
-// Register registers one or more workers to the registry
+// Register registers one or more workers to the registry represented by RegisterSet
 func Register(sets ...RegisterSet) {
 	mux.Lock()
 	defer mux.Unlock()
@@ -49,15 +49,15 @@ func Register(sets ...RegisterSet) {
 		}
 
 		workers[set.Name] = &Worker{
-			name:    set.Name,
-			worker:  set.Worker,
-			status:  Stopped,
-			waiters: []waiter{},
+			name:           set.Name,
+			workerFunction: set.Worker,
+			status:         Stopped,
+			waiters:        []waiter{},
 		}
 	}
 }
 
-// Get returns a worker by name
+// Get returns a workerFunction by name
 func Get(name string) *Worker {
 	return workers[name]
 }

@@ -68,7 +68,7 @@ func TestWorker_Livecycle(t *testing.T) {
 		assert.Equal(t, "done", result2)
 	})
 
-	t.Run("explicit worker reusing", func(t *testing.T) {
+	t.Run("explicit workerFunction reusing", func(t *testing.T) {
 		worker := workering.Get("test-Worker")
 		assert.Nil(t, worker.Start())
 		inputChannel <- "hello"

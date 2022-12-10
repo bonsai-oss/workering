@@ -8,13 +8,13 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-// Start starts a worker
+// Start starts a Worker
 func (w *Worker) Start() error {
 	mux.Lock()
 	defer mux.Unlock()
 
 	if w.status == Running {
-		return fmt.Errorf("worker already running")
+		return fmt.Errorf("workerFunction already running")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -22,14 +22,14 @@ func (w *Worker) Start() error {
 	w.cancelFunc = &cancel
 
 	done := make(chan any)
-	go w.worker(ctx, done)
+	go w.workerFunction(ctx, done)
 	go w.watchdog(done)
 
 	w.status = Running
 	return nil
 }
 
-// watchdog watches for a done channel and manages the status of the worker
+// watchdog watches for a done channel and manages the status of the workerFunction
 func (w *Worker) watchdog(done chan any) {
 	<-done
 	defer func() { w.status = Stopped }()
@@ -55,20 +55,20 @@ func (w *Worker) watchdog(done chan any) {
 	w.waiters = []waiter{}
 }
 
-// WaitStopped registers a waiter and returns a channel informed when the worker is stopped
+// WaitStopped registers a waiter and returns a channel informed when the WorkerFunction is stopped
 func (w *Worker) WaitStopped() <-chan any {
 	var waiterInstance = make(waiter)
 	w.waiters = append(w.waiters, waiterInstance)
 	return waiterInstance
 }
 
-// Stop stops a worker and waits for it to stop
+// Stop stops a Worker and waits for it to stop
 func (w *Worker) Stop() error {
 	mux.Lock()
 	defer mux.Unlock()
 
 	if w.status == Stopped {
-		return fmt.Errorf("worker already stopped")
+		return fmt.Errorf("workerFunction already stopped")
 	}
 	(*w.cancelFunc)()
 
@@ -81,12 +81,12 @@ func (w *Worker) Stop() error {
 	return nil
 }
 
-// Status returns a workers status
+// Status returns the Status of a Worker
 func (w *Worker) Status() WorkerStatus {
 	return w.status
 }
 
-// StartAll starts all workers
+// StartAll starts all Worker instances
 func StartAll() error {
 	var err error
 	for _, worker := range workers {
@@ -101,7 +101,7 @@ func StartAll() error {
 	return err
 }
 
-// StopAll stops all workers and waits for them to stop
+// StopAll stops all Worker instances and waits for them
 func StopAll() error {
 	var err error
 	for _, worker := range workers {
