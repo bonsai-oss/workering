@@ -1,6 +1,7 @@
 # workering
 
 ![](https://gitlab.com/bonsai-oss/workering/badges/main/pipeline.svg)
+![](https://gitlab.com/bonsai-oss/workering/badges/main/coverage.svg)
 
 *a libaray simplifying worker management for golang microservices*
 
