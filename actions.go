@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
+// Start starts a worker
 func (w *Worker) Start() error {
 	mux.Lock()
 	defer mux.Unlock()
@@ -28,6 +29,7 @@ func (w *Worker) Start() error {
 	return nil
 }
 
+// watchdog watches for a done channel and manages the status of the worker
 func (w *Worker) watchdog(done chan any) {
 	<-done
 	defer func() { w.status = Stopped }()
@@ -53,12 +55,14 @@ func (w *Worker) watchdog(done chan any) {
 	w.waiters = []waiter{}
 }
 
+// WaitStopped registers a waiter and returns a channel informed when the worker is stopped
 func (w *Worker) WaitStopped() <-chan any {
 	var waiterInstance = make(waiter)
 	w.waiters = append(w.waiters, waiterInstance)
 	return waiterInstance
 }
 
+// Stop stops a worker and waits for it to stop
 func (w *Worker) Stop() error {
 	mux.Lock()
 	defer mux.Unlock()
@@ -77,10 +81,12 @@ func (w *Worker) Stop() error {
 	return nil
 }
 
+// Status returns a workers status
 func (w *Worker) Status() WorkerStatus {
 	return w.status
 }
 
+// StartAll starts all workers
 func StartAll() error {
 	var err error
 	for _, worker := range workers {
@@ -95,6 +101,7 @@ func StartAll() error {
 	return err
 }
 
+// StopAll stops all workers and waits for them to stop
 func StopAll() error {
 	var err error
 	for _, worker := range workers {
