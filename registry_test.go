@@ -3,6 +3,7 @@ package workering_test
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bonsai-oss/workering/v2"
@@ -11,8 +12,9 @@ import (
 func TestRegister(t *testing.T) {
 	// empty Worker
 	assert.Panics(t, func() {
+		workerName := uuid.New().String()
 		workering.Register(workering.RegisterSet{
-			Name:   "test-Worker",
+			Name:   workerName,
 			Worker: nil,
 		})
 	})
@@ -27,22 +29,24 @@ func TestRegister(t *testing.T) {
 
 	// normal register call
 	assert.NotPanics(t, func() {
+		workerName := uuid.New().String()
 		workering.Register(workering.RegisterSet{
-			Name:   "test-worker2",
+			Name:   workerName,
 			Worker: testWorkerBuilder(nil, nil),
 		})
 
-		assert.NotNil(t, workering.Get("test-Worker"))
+		assert.NotNil(t, workering.Get(workerName))
 	})
 
 	// panic on duplicate register
 	assert.Panics(t, func() {
+		workerName := uuid.New().String()
 		workering.Register(workering.RegisterSet{
-			Name:   "test-Worker-duplicate",
+			Name:   workerName,
 			Worker: testWorkerBuilder(nil, nil),
 		})
 		workering.Register(workering.RegisterSet{
-			Name:   "test-Worker-duplicate",
+			Name:   workerName,
 			Worker: testWorkerBuilder(nil, nil),
 		})
 	})

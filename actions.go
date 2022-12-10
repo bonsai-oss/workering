@@ -32,7 +32,10 @@ func (w *Worker) Start() error {
 // watchdog watches for a done channel and manages the status of the workerFunction
 func (w *Worker) watchdog(done chan any) {
 	<-done
-	defer func() { w.status = Stopped }()
+	defer func() {
+		w.status = Stopped
+		w.stoppedChan <- true
+	}()
 
 	if len(w.waiters) == 0 {
 		return
@@ -43,15 +46,12 @@ func (w *Worker) watchdog(done chan any) {
 		wg.Add(1)
 		go func(wg *sync.WaitGroup, wd waiter) {
 			defer wg.Done()
-			wd <- interface{}(nil)
+			wd <- true
+			close(wd)
 		}(&wg, w.waiters[waiterIndex])
 	}
 	wg.Wait()
 
-	// cleanup waiters
-	for waiterIndex := range w.waiters {
-		close(w.waiters[waiterIndex])
-	}
 	w.waiters = []waiter{}
 }
 
@@ -71,8 +71,7 @@ func (w *Worker) Stop() error {
 		return fmt.Errorf("workerFunction already stopped")
 	}
 	(*w.cancelFunc)()
-
-	<-w.WaitStopped()
+	<-w.stoppedChan
 
 	// clear context and cancelFunc for reusing
 	w.ctx = nil

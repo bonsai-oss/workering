@@ -3,9 +3,11 @@ package workering_test
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bonsai-oss/workering/v2"
@@ -29,13 +31,13 @@ func TestWorker_Livecycle(t *testing.T) {
 	inputChannel := make(chan string)
 	outputChannel := make(chan string)
 
-	workering.Register(workering.RegisterSet{
-		Name:   "test-Worker",
-		Worker: testWorkerBuilder(inputChannel, outputChannel),
-	})
-
 	t.Run("without waiters", func(t *testing.T) {
-		worker := workering.Get("test-Worker")
+		workerName := uuid.New().String()
+		workering.Register(workering.RegisterSet{
+			Name:   workerName,
+			Worker: testWorkerBuilder(inputChannel, outputChannel),
+		})
+		worker := workering.Get(workerName)
 		assert.Nil(t, worker.Start())
 		inputChannel <- "hello"
 		assert.Equal(t, "HELLO", <-outputChannel)
@@ -43,33 +45,38 @@ func TestWorker_Livecycle(t *testing.T) {
 	})
 
 	t.Run("with waiters", func(t *testing.T) {
-		worker := workering.Get("test-Worker")
-
-		var result1, result2 string
-
-		go func(result *string) {
-			<-worker.WaitStopped()
-			*result = "done"
-		}(&result1)
-		go func(result *string) {
-			<-worker.WaitStopped()
-			*result = "done"
-		}(&result2)
+		workerName := uuid.New().String()
+		workering.Register(workering.RegisterSet{
+			Name:   workerName,
+			Worker: testWorkerBuilder(inputChannel, outputChannel),
+		})
+		worker := workering.Get(workerName)
 
 		assert.Nil(t, worker.Start())
+
 		inputChannel <- "hello"
 		assert.Equal(t, "HELLO", <-outputChannel)
+
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+		go func(wg *sync.WaitGroup) {
+			defer wg.Done()
+			assert.NotNil(t, <-worker.WaitStopped())
+		}(&wg)
+
+		time.Sleep(10 * time.Millisecond)
+
 		assert.Nil(t, worker.Stop())
-
-		// must wait for the waiters to finish
-		time.Sleep(50 * time.Millisecond)
-
-		assert.Equal(t, "done", result1)
-		assert.Equal(t, "done", result2)
+		wg.Wait()
 	})
 
 	t.Run("explicit workerFunction reusing", func(t *testing.T) {
-		worker := workering.Get("test-Worker")
+		workerName := uuid.New().String()
+		workering.Register(workering.RegisterSet{
+			Name:   workerName,
+			Worker: testWorkerBuilder(inputChannel, outputChannel),
+		})
+		worker := workering.Get(workerName)
 		assert.Nil(t, worker.Start())
 		inputChannel <- "hello"
 		assert.Equal(t, "HELLO", <-outputChannel)
