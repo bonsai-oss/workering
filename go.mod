@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 )
 
 require (
