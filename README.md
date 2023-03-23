@@ -3,7 +3,7 @@
 ![](https://gitlab.com/bonsai-oss/workering/badges/main/pipeline.svg)
 ![](https://gitlab.com/bonsai-oss/workering/badges/main/coverage.svg)
 
-*a libaray simplifying worker management for golang microservices*
+*a library simplifying worker management for Golang microservices*
 
 ## example
 See the following projects for examples of how to use workering:
